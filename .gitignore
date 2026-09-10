@@ -2,3 +2,8 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Escenas de Blender (taller de trabajo, no un resultado del proyecto) — las
+# exportaciones finales que sí importan viven en public/models/*.glb.
+*.blend
+*.blend1
