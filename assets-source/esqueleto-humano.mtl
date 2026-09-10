@@ -1,0 +1,31 @@
+# Exported by three-d-stage
+newmtl hueso
+Kd 0.7991 0.7454 0.6172
+Ks 0.2000 0.2000 0.2000
+Ns 80
+d 1.0000
+
+newmtl hueso_esponjoso
+Kd 0.6654 0.6105 0.4793
+Ks 0.2000 0.2000 0.2000
+Ns 50
+d 1.0000
+
+newmtl cavidad
+Kd 0.1119 0.0953 0.0723
+Ks 0.2000 0.2000 0.2000
+Ns 20
+d 1.0000
+
+newmtl esmalte
+Kd 0.9301 0.9047 0.8228
+Ks 0.2000 0.2000 0.2000
+Ns 156
+d 1.0000
+
+newmtl cartilago
+Kd 0.5457 0.5210 0.4678
+Ks 0.2000 0.2000 0.2000
+Ns 120
+d 1.0000
+

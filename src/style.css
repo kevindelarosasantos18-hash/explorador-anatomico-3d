@@ -1,0 +1,139 @@
+:root{
+  --bg:#0A1018;
+  --panel:rgba(14,22,26,0.72);
+  --panel-border:rgba(47,201,176,0.16);
+  --teal:#2FC9B0;
+  --teal-dim:rgba(47,201,176,0.55);
+  --amber:#FFB84D;
+  --text:#EAF2F0;
+  --text-dim:#8CA39F;
+  --radius:18px;
+}
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; padding:0;
+  height:100vh; height:100dvh;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+#canvas-container{
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 26%, rgba(47,201,176,0.09), transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 100%, rgba(255,184,77,0.05), transparent 60%),
+    var(--bg);
+}
+#canvas-container canvas{ display:block; touch-action:none; }
+
+#load-error{
+  position:fixed; inset:0; display:none; z-index:50;
+  align-items:center; justify-content:center; text-align:center;
+  padding:2rem; background:var(--bg); color:var(--text-dim);
+  font-size:0.9rem; line-height:1.6;
+}
+
+#hud{ position:fixed; inset:0; pointer-events:none; z-index:10; }
+
+#header{ position:absolute; top:0; left:0; padding:1.1rem 1.2rem; max-width:58vw; }
+#header h1{ margin:0; font-size:clamp(1.05rem, 1rem + 1vw, 1.5rem); font-weight:600; letter-spacing:-0.01em; }
+#header p{ margin:0.35rem 0 0; font-size:0.82rem; color:var(--text-dim); line-height:1.45; max-width:32ch; }
+
+#toggle-controls{
+  position:absolute; top:1.1rem; right:1.2rem; pointer-events:auto;
+  width:2.6rem; height:2.6rem; border-radius:999px;
+  border:1px solid var(--panel-border); background:var(--panel);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  color:var(--text); font-size:1.15rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+
+#controls-panel{
+  position:absolute; top:4rem; right:1.2rem; width:min(300px,86vw);
+  pointer-events:auto; background:var(--panel); border:1px solid var(--panel-border);
+  border-radius:var(--radius); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  padding:1.1rem; max-height:calc(100vh - 6rem); max-height:calc(100dvh - 6rem);
+  overflow-y:auto; transition:opacity 0.2s ease, transform 0.2s ease;
+}
+#controls-panel.collapsed{ opacity:0; transform:translateY(-8px) scale(0.98); pointer-events:none; }
+
+.section-label{ font-size:0.72rem; font-weight:600; color:var(--teal); margin:0 0 0.5rem; letter-spacing:0.02em; }
+.section-label:not(:first-child){ margin-top:1.1rem; }
+
+.preset-row{ display:flex; gap:0.4rem; }
+.preset-btn{
+  flex:1; padding:0.5rem 0.3rem; border-radius:999px; border:1px solid var(--panel-border);
+  background:transparent; color:var(--text-dim); font-size:0.78rem; cursor:pointer;
+  transition:background 0.15s, color 0.15s, border-color 0.15s; font-family:inherit;
+}
+.preset-btn.active{ background:var(--teal-dim); border-color:var(--teal); color:#08211c; font-weight:600; }
+
+.layer-toggles{ display:flex; flex-direction:column; gap:0.55rem; }
+.layer-toggle{ display:flex; align-items:center; gap:0.6rem; font-size:0.85rem; cursor:pointer; }
+.layer-toggle input{ width:1rem; height:1rem; accent-color:var(--teal); cursor:pointer; }
+.swatch{ width:0.62rem; height:0.62rem; border-radius:50%; flex-shrink:0; }
+
+.opacity-row{ margin-top:0.9rem; display:none; }
+.opacity-row.visible{ display:block; }
+.opacity-row label{ font-size:0.75rem; color:var(--text-dim); display:block; margin-bottom:0.4rem; }
+.opacity-row input[type=range]{ width:100%; accent-color:var(--teal); }
+
+#reset-view{
+  margin-top:1.1rem; width:100%; padding:0.55rem; border-radius:999px;
+  border:1px solid var(--panel-border); background:transparent; color:var(--text-dim);
+  font-size:0.8rem; cursor:pointer; font-family:inherit;
+}
+#reset-view:hover{ color:var(--text); border-color:var(--teal-dim); }
+
+.hint{ margin-top:0.9rem; font-size:0.72rem; color:var(--text-dim); opacity:0.75; line-height:1.55; }
+
+#info-panel{
+  position:absolute; left:50%; bottom:1.2rem; transform:translateX(-50%);
+  width:min(480px,92vw); pointer-events:auto; background:var(--panel);
+  border:1px solid var(--panel-border); border-radius:var(--radius);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  padding:0.9rem 1.2rem; text-align:center;
+}
+.info-placeholder{ color:var(--text-dim); font-size:0.85rem; }
+.info-tag{ font-size:0.7rem; font-weight:600; color:var(--teal); margin-bottom:0.2rem; }
+.info-name{ font-size:1.25rem; font-weight:700; margin-bottom:0.3rem; }
+.info-desc{ font-size:0.82rem; color:var(--text-dim); line-height:1.5; }
+
+#toggle-credits{
+  position:absolute; bottom:1.1rem; left:1.2rem; pointer-events:auto;
+  width:2.2rem; height:2.2rem; border-radius:999px;
+  border:1px solid var(--panel-border); background:var(--panel);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  color:var(--text-dim); font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+#toggle-credits:hover{ color:var(--text); border-color:var(--teal-dim); }
+
+#credits-panel{
+  position:absolute; bottom:3.7rem; left:1.2rem; width:min(320px,80vw);
+  background:var(--panel); border:1px solid var(--panel-border);
+  border-radius:var(--radius); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  padding:1.1rem; opacity:0; transform:translateY(8px) scale(0.98);
+  pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease;
+}
+#credits-panel.visible{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+
+.credits-list{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0.6rem; }
+.credits-list li{ font-size:0.76rem; color:var(--text-dim); line-height:1.5; }
+.credits-list strong{ color:var(--text); font-weight:600; }
+.credits-list a{ color:var(--teal); text-decoration:none; }
+.credits-list a:hover{ text-decoration:underline; }
+
+button:focus-visible, input:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+
+@media (max-width:480px){
+  #header p{ display:none; }
+  #header h1{ font-size:1.05rem; }
+
+  /* El panel inferior de info, centrado, choca con el botón de créditos
+     (abajo a la izquierda) en pantallas angostas — se corre el panel para
+     dejarle espacio al botón en vez de centrarlo. */
+  #info-panel{ left:3.8rem; right:1.2rem; transform:none; width:auto; }
+}
