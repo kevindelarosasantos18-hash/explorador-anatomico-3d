@@ -12,7 +12,7 @@ const SKIN_META = {
 };
 
 export function loadSkin(bodyGroup, allMeshes, sex = 'male') {
-  return loadGlbLayer(`models/${sex}/skin.glb`, 'piel', () => SKIN_META).then((parts) => {
+  return loadGlbLayer(`models/${sex}/skin.glb`, 'piel', () => SKIN_META, { useZones: true }).then((parts) => {
     parts.forEach((mesh) => bodyGroup.add(mesh));
     allMeshes.push(...parts);
     return parts;

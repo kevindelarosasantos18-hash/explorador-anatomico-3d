@@ -29,8 +29,12 @@ function loader() {
 
 // Prepara cada malla del árbol `root` igual que las piezas primitivas
 // (userData de selección/resaltado, material clonado con emissive propio), y
-// hornea `scale`/`offset` directamente en su transform local.
-function bakeAndCollect(root, scale, offset, layer, getMeta) {
+// hornea `scale`/`offset` directamente en su transform local. `useZones`
+// queda grabado en userData: lo lee select.js para decidir si un clic en
+// esta malla debe resolverse por posición (data/body-zones.js — para mallas
+// "en bloque" sin nombre propio por parte) o usar el nombre real que ya
+// trae la malla (huesos, cerebro, sistema reproductivo...).
+function bakeAndCollect(root, scale, offset, layer, getMeta, useZones) {
   const parts = [];
   root.traverse((obj) => {
     if (!obj.isMesh) return;
@@ -44,6 +48,7 @@ function bakeAndCollect(root, scale, offset, layer, getMeta) {
       name: meta.name,
       desc: meta.desc,
       layer,
+      useZones: !!useZones,
       baseScale: obj.scale.clone(),
       currentFactor: 1,
       targetScale: 1
@@ -75,10 +80,17 @@ function computeStretchFit(root, topY, bottomY) {
 // ajustado a la escala común, con cada malla preparada para
 // selección/resaltado igual que las piezas primitivas. `getMeta(meshName)`
 // devuelve {name, desc} para el panel de información; `layer` es la clave de
-// capa ('hueso','musculo','organo',...). `range` es opcional: {top, bottom}
-// en el sistema de coordenadas del cuerpo, para piezas que no son de cuerpo
-// completo (ver computeStretchFit).
-export function loadGlbLayer(path, layer, getMeta, range) {
+// capa ('hueso','musculo','organo',...). `options.range` es opcional:
+// {top, bottom} en el sistema de coordenadas del cuerpo, para piezas que no
+// son de cuerpo completo (ver computeStretchFit). `options.useZones`
+// (default false) marca esta malla para selección por zona — úsalo cuando
+// `getMeta` devuelve el mismo nombre para toda la malla (musculo/piel/el
+// busto de órganos): sin esto, cualquier clic mostraría ese único nombre
+// genérico en vez de "Bíceps"/"Hígado"/etc. Déjalo en false (default) cuando
+// la malla ya trae nombre real por pieza (huesos, cerebro, sistema
+// reproductivo...).
+export function loadGlbLayer(path, layer, getMeta, options = {}) {
+  const { range, useZones } = options;
   return new Promise((resolve, reject) => {
     loader().load(
       path,
@@ -87,7 +99,7 @@ export function loadGlbLayer(path, layer, getMeta, range) {
         const { scale, offset } = range
           ? computeStretchFit(root, range.top, range.bottom)
           : computeStretchFit(root, TARGET_HEIGHT, TARGET_FEET_Y);
-        resolve(bakeAndCollect(root, scale, offset, layer, getMeta));
+        resolve(bakeAndCollect(root, scale, offset, layer, getMeta, useZones));
       },
       undefined,
       reject
@@ -99,8 +111,8 @@ export function loadGlbLayer(path, layer, getMeta, range) {
 // el cerebro, descargado a su tamaño real en metros) y lo centra en un punto
 // exacto `center` (en el sistema de coordenadas del cuerpo), escalado por
 // `scaleFactor` (normalmente UNITS_PER_METER, si el asset se descargó con un
-// target_size en metros reales).
-export function loadGlbLayerAt(path, layer, getMeta, center, scaleFactor) {
+// target_size en metros reales). Mismo `useZones` que loadGlbLayer.
+export function loadGlbLayerAt(path, layer, getMeta, center, scaleFactor, useZones) {
   return new Promise((resolve, reject) => {
     loader().load(
       path,
@@ -114,7 +126,7 @@ export function loadGlbLayerAt(path, layer, getMeta, center, scaleFactor) {
           center[1] - boxCenter.y * scaleFactor,
           center[2] - boxCenter.z * scaleFactor
         );
-        resolve(bakeAndCollect(root, scaleFactor, offset, layer, getMeta));
+        resolve(bakeAndCollect(root, scaleFactor, offset, layer, getMeta, useZones));
       },
       undefined,
       reject

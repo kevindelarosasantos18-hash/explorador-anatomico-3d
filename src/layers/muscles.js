@@ -13,7 +13,7 @@ const MUSCLE_META = {
 };
 
 export function loadMuscles(bodyGroup, allMeshes, sex = 'male') {
-  return loadGlbLayer(`models/${sex}/muscles.glb`, 'musculo', () => MUSCLE_META).then((parts) => {
+  return loadGlbLayer(`models/${sex}/muscles.glb`, 'musculo', () => MUSCLE_META, { useZones: true }).then((parts) => {
     parts.forEach((mesh) => bodyGroup.add(mesh));
     allMeshes.push(...parts);
     return parts;

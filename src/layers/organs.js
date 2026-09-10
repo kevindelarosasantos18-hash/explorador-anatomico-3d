@@ -19,7 +19,7 @@ const ORGANS_META = {
 };
 
 export function loadOrgans(bodyGroup, allMeshes) {
-  return loadGlbLayer('models/organs.glb', 'organo', () => ORGANS_META, ORGANS_RANGE).then((parts) => {
+  return loadGlbLayer('models/organs.glb', 'organo', () => ORGANS_META, { range: ORGANS_RANGE, useZones: true }).then((parts) => {
     parts.forEach((mesh) => bodyGroup.add(mesh));
     allMeshes.push(...parts);
     return parts;

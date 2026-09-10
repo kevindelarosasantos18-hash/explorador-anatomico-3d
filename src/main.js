@@ -7,6 +7,7 @@ import { loadMuscles } from './layers/muscles.js';
 import { loadOrgans } from './layers/organs.js';
 import { loadSkin } from './layers/skin.js';
 import { loadBrain } from './layers/brain.js';
+import { loadReproductive } from './layers/reproductive.js';
 import { createSelection } from './interaction/select.js';
 import { showInfo, setupUI } from './ui/hud.js';
 
@@ -63,12 +64,31 @@ function loadSexLayer(loadFn, layerKey, sex, label) {
     });
 }
 
+// El sistema reproductivo femenino (útero, ovarios, trompas) es lo único
+// que de verdad cambia entre sexos en la zona de "Órganos" — el resto
+// (corazón, pulmones, tubo digestivo) se comparte igual para ambos (ver
+// organs.js) y no pasa por este mecanismo de carga/descarga. Vive en su
+// propia capa 'reproductivo' (ver reproductive.js) porque el busto de
+// órganos lo taparía si compartieran capa — mismo motivo que el cerebro.
+let reproductiveMeshes = [];
+
 function loadSexBody(sex) {
-  return Promise.all([
+  const loaders = [
     loadSexLayer(loadSkeleton, 'hueso', sex, 'el esqueleto real'),
     loadSexLayer(loadMuscles, 'musculo', sex, 'el sistema muscular real'),
     loadSexLayer(loadSkin, 'piel', sex, 'la piel real')
-  ]);
+  ];
+  if (sex === 'female') {
+    loaders.push(
+      loadReproductive(bodyGroup, allMeshes)
+        .then((parts) => {
+          parts.forEach((m) => { m.visible = layerManager.layerVisible.reproductivo; });
+          reproductiveMeshes = parts;
+        })
+        .catch((err) => console.error('No se pudo cargar el sistema reproductivo real:', err))
+    );
+  }
+  return Promise.all(loaders);
 }
 
 function switchSex(sex) {
@@ -78,6 +98,8 @@ function switchSex(sex) {
     sexMeshes[key].forEach(disposeMesh);
     sexMeshes[key] = [];
   });
+  reproductiveMeshes.forEach(disposeMesh);
+  reproductiveMeshes = [];
   currentSex = sex;
   loadSexBody(sex);
 }

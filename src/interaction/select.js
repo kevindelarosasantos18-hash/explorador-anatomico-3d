@@ -139,8 +139,7 @@ export function createSelection({ bodyGroup, camera, canvasEl, layerManager, get
       return;
     }
     const hit = hits[0];
-    const layer = hit.object.userData.layer;
-    if (ZONES_BY_LAYER[layer]) selectZone(layer, hit.point);
+    if (hit.object.userData.useZones) selectZone(hit.object.userData.layer, hit.point);
     else selectBone(hit.object);
   }
 

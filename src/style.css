@@ -72,6 +72,7 @@ html,body{
 
 .layer-toggles{ display:flex; flex-direction:column; gap:0.55rem; }
 .layer-toggle{ display:flex; align-items:center; gap:0.6rem; font-size:0.85rem; cursor:pointer; }
+.layer-toggle[hidden]{ display:none; }
 .layer-toggle input{ width:1rem; height:1rem; accent-color:var(--teal); cursor:pointer; }
 .swatch{ width:0.62rem; height:0.62rem; border-radius:50%; flex-shrink:0; }
 

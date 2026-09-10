@@ -1,15 +1,16 @@
-// "cerebro" queda fuera de los tres presets a propósito: el busto de
-// "organo" trae una cabeza con la piel cerrada que lo taparía igual, así que
-// mostrarlo por defecto ahí solo generaría clipping sin verse. Se explora
-// aparte, apagando "Órganos" y prendiendo "Cerebro" a mano.
+// "cerebro" y "reproductivo" quedan fuera de los tres presets a propósito:
+// el busto de "organo" es sólido en esas zonas (cabeza cerrada, pelvis sin
+// abrir) y las taparía igual, así que mostrarlas por defecto ahí solo
+// generaría clipping sin verse. Se exploran aparte, apagando "Órganos" y
+// prendiendo el interruptor correspondiente a mano.
 export const PRESETS = {
-  externa: { piel: true, musculo: false, hueso: false, organo: false, cerebro: false, opacity: 100 },
-  rayosx: { piel: true, musculo: false, hueso: true, organo: true, cerebro: false, opacity: 16 },
-  interna: { piel: false, musculo: true, hueso: true, organo: true, cerebro: false, opacity: 100 }
+  externa: { piel: true, musculo: false, hueso: false, organo: false, cerebro: false, reproductivo: false, opacity: 100 },
+  rayosx: { piel: true, musculo: false, hueso: true, organo: true, cerebro: false, reproductivo: false, opacity: 16 },
+  interna: { piel: false, musculo: true, hueso: true, organo: true, cerebro: false, reproductivo: false, opacity: 100 }
 };
 
 export function createLayerManager(allMeshes, { onDeselectIfHidden }) {
-  const layerVisible = { piel: true, musculo: false, hueso: false, organo: false, cerebro: false };
+  const layerVisible = { piel: true, musculo: false, hueso: false, organo: false, cerebro: false, reproductivo: false };
 
   function setLayer(layer, visible) {
     layerVisible[layer] = visible;

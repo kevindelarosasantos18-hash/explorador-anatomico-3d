@@ -49,6 +49,17 @@ export function setupUI({ layerManager, orbit, deselectPart, switchSex }) {
       document.querySelectorAll('[data-sex]').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       deselectPart();
+      // El interruptor de sistema reproductivo solo tiene sentido con el
+      // cuerpo femenino (es la única pieza que de verdad cambia entre sexos
+      // en "Órganos") — se oculta y se apaga con el cuerpo masculino.
+      const reproToggle = document.getElementById('reproductive-toggle');
+      const isFemale = btn.dataset.sex === 'female';
+      reproToggle.hidden = !isFemale;
+      if (!isFemale) {
+        const cb = reproToggle.querySelector('input');
+        cb.checked = false;
+        layerManager.setLayer('reproductivo', false);
+      }
     });
   });
 
