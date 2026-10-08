@@ -1,1 +1,0 @@
-{ "name": "panel-consumo", "version": "0.1.0", "description": "Paneles de consumo de la conversación: tokens por pedido, contexto, herramientas, tiempo, costo, límites, caché y eficiencia", "types": "./types/index.d.ts" }
