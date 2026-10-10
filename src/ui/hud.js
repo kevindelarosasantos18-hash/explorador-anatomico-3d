@@ -1,13 +1,43 @@
-export function showInfo(data, layerLabel) {
+// `actions` (opcional) trae los botones de aislamiento a mostrar bajo la
+// descripción, ya resueltos por main.js según lo que se tocó:
+//  - actions.onExpandPiece: aísla y gira solo la malla tocada (huesos).
+//  - actions.expandRegionLabel + actions.onExpandRegion: aísla y gira toda
+//    la región anatómica (p.ej. "brazo derecho") a la que pertenece.
+//  - actions.onAcercar: para capas sin malla propia por parte (músculo,
+//    órgano, piel) — acerca la cámara al punto tocado sin ocultar nada.
+//  - actions.onVolver: presente mientras hay una vista aislada activa.
+export function showInfo(data, layerLabel, actions = {}) {
   const panel = document.getElementById('info-panel');
+
+  const buttons = [];
+  if (actions.onExpandPiece) buttons.push(['info-action-btn', 'expand-piece', 'Expandir esta pieza']);
+  if (actions.onExpandRegion) buttons.push(['info-action-btn', 'expand-region', `Expandir región: ${actions.expandRegionLabel}`]);
+  if (actions.onAcercar) buttons.push(['info-action-btn', 'acercar', 'Acercar']);
+  if (actions.onVolver) buttons.push(['info-action-btn info-action-volver', 'volver', '↺ Volver']);
+  const buttonsHtml = buttons.length
+    ? '<div class="info-actions">' + buttons.map(([cls, action, label]) => `<button class="${cls}" data-action="${action}">${label}</button>`).join('') + '</div>'
+    : '';
+
   if (!data) {
-    panel.innerHTML = '<div class="info-placeholder">Toca cualquier parte del cuerpo para ver su nombre.</div>';
-    return;
+    panel.innerHTML = actions.onVolver
+      ? '<div class="info-placeholder">Toca una pieza para ver su nombre.</div>' + buttonsHtml
+      : '<div class="info-placeholder">Toca cualquier parte del cuerpo para ver su nombre.</div>';
+  } else {
+    panel.innerHTML =
+      '<div class="info-tag">' + layerLabel + '</div>' +
+      '<div class="info-name">' + data.name + '</div>' +
+      '<div class="info-desc">' + data.desc + '</div>' +
+      buttonsHtml;
   }
-  panel.innerHTML =
-    '<div class="info-tag">' + layerLabel + '</div>' +
-    '<div class="info-name">' + data.name + '</div>' +
-    '<div class="info-desc">' + data.desc + '</div>';
+
+  const wire = (action, fn) => {
+    const btn = panel.querySelector(`[data-action="${action}"]`);
+    if (btn) btn.addEventListener('click', fn);
+  };
+  wire('expand-piece', actions.onExpandPiece);
+  wire('expand-region', actions.onExpandRegion);
+  wire('acercar', actions.onAcercar);
+  wire('volver', actions.onVolver);
 }
 
 export function setupUI({ layerManager, orbit, deselectPart, switchSex }) {

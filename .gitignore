@@ -7,3 +7,6 @@ dist/
 # exportaciones finales que sí importan viven en public/models/*.glb.
 *.blend
 *.blend1
+
+# Copias de seguridad de mallas (el .glb bueno es el que esta versionado)
+*.glb.bak

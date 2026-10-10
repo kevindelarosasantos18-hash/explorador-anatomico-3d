@@ -1,0 +1,150 @@
+<!--
+Visor HTML standalone para verificar visualmente un .glb exportado, sin
+depender de get_viewport_screenshot de BlenderMCP (que puede dar renders en
+blanco sin causa clara). Ver SKILL.md sección 6.
+
+Uso:
+1. Copiar este archivo a la raíz del proyecto (al lado de donde corre el
+   servidor de desarrollo — necesita poder pedir el .glb con una ruta relativa
+   tipo fetch, así que tiene que servirse desde el mismo dev server que sirve
+   los assets).
+2. Abrir con el servidor de desarrollo corriendo:
+   http://localhost:<puerto>/debug-viewer.html?model=<ruta-relativa-al-glb>
+3. Parámetros de query:
+   - model: ruta relativa al .glb (default: models/male/skeleton.glb, ajustar)
+   - filter: lista separada por comas; solo se muestran los meshes cuyo nombre
+     contenga alguno de esos substrings. Ej: ?filter=Craneo,Mandible,diente
+   - colorize=1: pinta cada mesh distinto con un color generado (útil para ver
+     de un vistazo cuántas piezas separadas hay y dónde están, en vez de que
+     todo se vea igual con la textura original).
+4. Click en cualquier pieza: el panel de arriba a la izquierda muestra el
+   nombre del objeto y el punto exacto de impacto en coordenadas de mundo
+   (útil para medir posiciones a ojo sin volver a Blender).
+5. Arrastrar para rotar, scroll para zoom (OrbitControls estándar).
+6. Es un archivo de trabajo — borralo cuando termines de diagnosticar, no lo
+   dejes commiteado al repo del proyecto.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+html,body{margin:0;height:100%;background:#333;font-family:monospace;}
+#info{position:fixed;top:0;left:0;background:rgba(0,0,0,0.8);color:#0f0;padding:8px;font-size:14px;z-index:10;white-space:pre;max-height:90vh;overflow:auto;}
+</style>
+</head>
+<body>
+<div id="info">loading...</div>
+<script type="importmap">
+{"imports": {"three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+"three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x333333);
+const camera = new THREE.PerspectiveCamera(50, 800/450, 0.001, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(800, 450);
+document.body.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+const dl = new THREE.DirectionalLight(0xffffff, 1.5);
+dl.position.set(1,1,1);
+scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0xffffff, 0.8);
+dl2.position.set(-1,0.5,-1);
+scene.add(dl2);
+
+const params = new URLSearchParams(location.search);
+const url = params.get('model') || 'models/male/skeleton.glb';
+const filterStr = params.get('filter') || '';
+const colorize = params.get('colorize') === '1';
+window.pieces = {};
+let modelRoot = null;
+
+// NOTA: si tu proyecto no usa compresión Draco en los .glb, podés sacar estas
+// dos líneas y el setDRACOLoader de abajo — no hacen falta.
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('draco/');
+const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
+window.__scene = scene;
+
+const colorMap = {};
+function colorFor(name) {
+  if (!colorMap[name]) {
+    const hue = Object.keys(colorMap).length * 47 % 360;
+    colorMap[name] = new THREE.Color(`hsl(${hue},70%,55%)`);
+  }
+  return colorMap[name];
+}
+
+loader.load(url, (gltf) => {
+  window.__gltf = gltf;
+  const allMeshes = [];
+  gltf.scene.traverse(o => { if (o.isMesh) allMeshes.push(o); });
+  const filters = filterStr.split(',').filter(Boolean);
+  const shown = filters.length ? allMeshes.filter(o => filters.some(f => o.name.includes(f))) : allMeshes;
+  modelRoot = new THREE.Group();
+  shown.forEach(o => {
+    window.pieces[o.name] = o;
+    if (colorize) {
+      o.material = o.material.clone();
+      o.material.color = colorFor(o.name);
+    }
+    modelRoot.add(o);
+  });
+  scene.add(modelRoot);
+
+  const box = new THREE.Box3().setFromObject(modelRoot);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(center);
+  camera.position.copy(center).add(new THREE.Vector3(size*0.7, size*0.4, size*0.7));
+  camera.near = Math.max(size/1000,0.0001); camera.far = size*10;
+  camera.updateProjectionMatrix();
+  controls.update();
+  document.title = 'loaded: ' + url;
+  document.getElementById('info').textContent = shown.length + '/' + allMeshes.length + ' pieces shown. Click one.\nfilter=' + filterStr;
+}, undefined, (err) => {
+  document.body.innerHTML = '<pre style="color:red">ERROR: ' + err + '</pre>';
+});
+
+const raycaster = new THREE.Raycaster();
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  const ndc = new THREE.Vector2(
+    ((e.clientX-rect.left)/rect.width)*2-1,
+    -((e.clientY-rect.top)/rect.height)*2+1
+  );
+  raycaster.setFromCamera(ndc, camera);
+  const hits = raycaster.intersectObjects(modelRoot ? modelRoot.children : [], true);
+  if (hits.length) {
+    const obj = hits[0].object;
+    const p = hits[0].point;
+    document.getElementById('info').textContent = 'name: ' + obj.name + '\nhit point: ' + p.x.toFixed(4)+','+p.y.toFixed(4)+','+p.z.toFixed(4);
+    document.title = 'PICKED: ' + obj.name;
+  }
+});
+
+function resize(){
+  const w = window.innerWidth || document.documentElement.clientWidth || 800;
+  const h = window.innerHeight || document.documentElement.clientHeight || 450;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+setTimeout(resize, 50);
+setTimeout(resize, 300);
+
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+animate();
+</script>
+</body>
+</html>

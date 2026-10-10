@@ -9,7 +9,21 @@ import { loadSkin } from './layers/skin.js';
 import { loadBrain } from './layers/brain.js';
 import { loadReproductive } from './layers/reproductive.js';
 import { createSelection } from './interaction/select.js';
+import { createIsolation } from './interaction/isolation.js';
 import { showInfo, setupUI } from './ui/hud.js';
+import { regionLabel as boneRegionLabel } from './data/bone-metadata.js';
+import { regionLabel as muscleRegionLabel } from './data/muscle-metadata.js';
+import { regionLabel as nerveRegionLabel } from './data/nerve-metadata.js';
+
+// Cada capa (hueso/musculo/cerebro) tiene su propio diccionario de regiones
+// (huesos y músculos se subdividen distinto: el esqueleto separa columna/
+// caja torácica/pelvis, los músculos y nervios las agrupan como "el
+// torso") — ver bone-metadata.js, muscle-metadata.js y nerve-metadata.js.
+function regionLabel(layer, region) {
+  if (layer === 'musculo') return muscleRegionLabel(region);
+  if (layer === 'cerebro') return nerveRegionLabel(region);
+  return boneRegionLabel(region);
+}
 
 const container = document.getElementById('canvas-container');
 const { scene, camera, renderer, bodyGroup } = createScene(container);
@@ -18,7 +32,10 @@ const canvasEl = renderer.domElement;
 const allMeshes = [];
 
 const layerManager = createLayerManager(allMeshes, {
-  onDeselectIfHidden: (layer) => selection.deselectIfLayerHidden(layer)
+  onDeselectIfHidden: (layer) => {
+    isolation.exit();
+    selection.deselectIfLayerHidden(layer);
+  }
 });
 
 const orbit = createOrbitInteraction({
@@ -28,13 +45,52 @@ const orbit = createOrbitInteraction({
   hitTest: (x, y) => selection.hitTest(x, y)
 });
 
+const isolation = createIsolation({ camera, allMeshes, layerManager });
+
+// Piezas de la capa/región de `mesh`, para "Expandir región" (todo el brazo,
+// toda la pierna...). Huesos y músculos llevan `region` en userData (ver
+// bone-metadata.js / muscle-metadata.js); órganos/piel no tienen esta opción.
+function meshesInRegion(mesh) {
+  const { layer, region } = mesh.userData;
+  return allMeshes.filter((m) => m.userData.layer === layer && m.userData.region === region);
+}
+
+function handleInfoChange(data, layerLabel, context = {}) {
+  const actions = {};
+  if (context.mesh) {
+    actions.onExpandPiece = () => {
+      isolation.enterPiece(context.mesh);
+      handleInfoChange(data, layerLabel, context);
+    };
+    if (context.mesh.userData.region) {
+      actions.expandRegionLabel = regionLabel(context.mesh.userData.layer, context.mesh.userData.region);
+      actions.onExpandRegion = () => {
+        isolation.enterRegion(meshesInRegion(context.mesh));
+        handleInfoChange(data, layerLabel, context);
+      };
+    }
+  } else if (context.zoneLayer) {
+    actions.onAcercar = () => {
+      isolation.enterZonePoint(context.zonePoint);
+      handleInfoChange(data, layerLabel, context);
+    };
+  }
+  if (isolation.isActive()) {
+    actions.onVolver = () => {
+      isolation.exit();
+      handleInfoChange(data, layerLabel, context);
+    };
+  }
+  showInfo(data, layerLabel, actions);
+}
+
 const selection = createSelection({
   bodyGroup,
   camera,
   canvasEl,
   layerManager,
   getPointerNDC: orbit.getPointerNDC,
-  onInfoChange: showInfo
+  onInfoChange: handleInfoChange
 });
 
 // --- Capas que dependen del sexo (esqueleto, músculos, piel): se pueden
@@ -93,6 +149,7 @@ function loadSexBody(sex) {
 
 function switchSex(sex) {
   if (sex === currentSex) return;
+  isolation.exit();
   selection.deselectPart();
   SEX_LAYERS.forEach((key) => {
     sexMeshes[key].forEach(disposeMesh);
@@ -130,8 +187,12 @@ function animate() {
     m.scale.set(b.x * ud.currentFactor, b.y * ud.currentFactor, b.z * ud.currentFactor);
   });
 
-  camera.position.set(0, 3.6, orbit.getCameraDistance());
-  camera.lookAt(0, 3.6, 0);
+  if (isolation.isActive()) {
+    isolation.update();
+  } else {
+    camera.position.set(0, 3.6, orbit.getCameraDistance());
+    camera.lookAt(0, 3.6, 0);
+  }
 
   renderer.render(scene, camera);
 }

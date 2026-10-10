@@ -102,6 +102,16 @@ html,body{
 .info-name{ font-size:1.25rem; font-weight:700; margin-bottom:0.3rem; }
 .info-desc{ font-size:0.82rem; color:var(--text-dim); line-height:1.5; }
 
+.info-actions{ display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; margin-top:0.8rem; }
+.info-action-btn{
+  padding:0.45rem 0.9rem; border-radius:999px; border:1px solid var(--teal-dim);
+  background:transparent; color:var(--teal); font-size:0.78rem; font-weight:600;
+  cursor:pointer; font-family:inherit; transition:background 0.15s, color 0.15s;
+}
+.info-action-btn:hover{ background:var(--teal-dim); color:#08211c; }
+.info-action-volver{ border-color:var(--amber); color:var(--amber); }
+.info-action-volver:hover{ background:var(--amber); color:#2b1a00; }
+
 #toggle-credits{
   position:absolute; bottom:1.1rem; left:1.2rem; pointer-events:auto;
   width:2.2rem; height:2.2rem; border-radius:999px;

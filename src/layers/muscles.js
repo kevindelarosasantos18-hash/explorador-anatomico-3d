@@ -1,19 +1,12 @@
 import { loadGlbLayer } from './glbBodyLoader.js';
+import { getMuscleMeta, getMuscleRegion } from '../data/muscle-metadata.js';
 
-// Sistema muscular real. Masculino: "Male Full Body Ecorche" de diegoluga
-// (Sketchfab, CC-BY), con textura propia — ver assets-source/MUSCLES_CREDITS.md.
-// Femenino: "Female Body Muscular System - Anatomy Study" de ruslangadzhiev
-// (Sketchfab, CC-BY) — ese asset no traía textura de color, así que se le
-// armó un material rojo muscular en Blender antes de exportar. Ninguno de
-// los dos separa músculos individuales, así que todas las piezas comparten
-// la misma etiqueta al seleccionarlas.
-const MUSCLE_META = {
-  name: 'Sistema muscular',
-  desc: 'Red de más de 600 músculos que permite el movimiento del cuerpo, mantiene la postura y genera calor corporal.'
-};
-
+// Sistema muscular real: 410 músculos individuales del modelo "Myology" de
+// Z-Anatomy (CC-BY), separados y clasificados pieza por pieza en Blender —
+// ver assets-source/MUSCLES_CREDITS.md. Reemplaza al ecorche/maniquí
+// muscular anterior (una sola malla sin nombres por músculo).
 export function loadMuscles(bodyGroup, allMeshes, sex = 'male') {
-  return loadGlbLayer(`models/${sex}/muscles.glb`, 'musculo', () => MUSCLE_META, { useZones: true }).then((parts) => {
+  return loadGlbLayer(`models/${sex}/muscles.glb`, 'musculo', getMuscleMeta, { getRegion: getMuscleRegion }).then((parts) => {
     parts.forEach((mesh) => bodyGroup.add(mesh));
     allMeshes.push(...parts);
     return parts;

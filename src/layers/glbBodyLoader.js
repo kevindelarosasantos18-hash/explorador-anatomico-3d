@@ -34,7 +34,7 @@ function loader() {
 // esta malla debe resolverse por posición (data/body-zones.js — para mallas
 // "en bloque" sin nombre propio por parte) o usar el nombre real que ya
 // trae la malla (huesos, cerebro, sistema reproductivo...).
-function bakeAndCollect(root, scale, offset, layer, getMeta, useZones) {
+function bakeAndCollect(root, scale, offset, layer, getMeta, useZones, getRegion) {
   const parts = [];
   root.traverse((obj) => {
     if (!obj.isMesh) return;
@@ -49,6 +49,7 @@ function bakeAndCollect(root, scale, offset, layer, getMeta, useZones) {
       desc: meta.desc,
       layer,
       useZones: !!useZones,
+      region: getRegion ? getRegion(obj.name) : null,
       baseScale: obj.scale.clone(),
       currentFactor: 1,
       targetScale: 1
@@ -89,17 +90,30 @@ function computeStretchFit(root, topY, bottomY) {
 // genérico en vez de "Bíceps"/"Hígado"/etc. Déjalo en false (default) cuando
 // la malla ya trae nombre real por pieza (huesos, cerebro, sistema
 // reproductivo...).
+// `options.inset` (en unidades del cuerpo) encoge la capa por arriba y por
+// abajo dentro del cuerpo. Necesario para las capas interiores: sin él, cada
+// capa se estira EXACTAMENTE a la misma altura, así que el punto más alto del
+// cráneo y el del músculo caen en el mismo sitio y el hueso atraviesa al
+// músculo en la coronilla (y lo mismo en los talones).
 export function loadGlbLayer(path, layer, getMeta, options = {}) {
-  const { range, useZones } = options;
+  const { range, useZones, getRegion, inset = 0, align } = options;
   return new Promise((resolve, reject) => {
     loader().load(
       path,
       (gltf) => {
         const root = gltf.scene;
-        const { scale, offset } = range
-          ? computeStretchFit(root, range.top, range.bottom)
-          : computeStretchFit(root, TARGET_HEIGHT, TARGET_FEET_Y);
-        resolve(bakeAndCollect(root, scale, offset, layer, getMeta, useZones));
+        const top = (range ? range.top : TARGET_HEIGHT) - inset;
+        const bottom = (range ? range.bottom : TARGET_FEET_Y) + inset;
+        const { scale, offset } = computeStretchFit(root, top, bottom);
+        // `align` corrige el centrado por bounding box, que es solo una
+        // heurística: el centro del bbox de la piel y el del esqueleto no son
+        // el mismo punto anatómico, así que sin esto las capas quedan
+        // desplazadas entre sí en X/Z aunque cada una esté bien construida.
+        if (align) {
+          offset.x += (align.x || 0);
+          offset.z += (align.z || 0);
+        }
+        resolve(bakeAndCollect(root, scale, offset, layer, getMeta, useZones, getRegion));
       },
       undefined,
       reject

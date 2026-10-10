@@ -1,25 +1,22 @@
-import { loadGlbLayer, TARGET_HEIGHT } from './glbBodyLoader.js';
+import { loadGlbLayer } from './glbBodyLoader.js';
+import { getOrganMeta } from '../data/organ-metadata.js';
 
-// Órganos internos reales (Sketchfab, autor: Joe_Bou_Khalil, CC-BY) — ver
-// assets-source/ORGANS_CREDITS.md. Es un busto de torso+cabeza "abierto"
-// (piel + cavidad con corazón, pulmones, tubo digestivo, riñones, vasos
-// sanguíneos) en una sola malla con una textura, sin separar cada órgano —
-// igual que muscles.js, todas las piezas comparten una etiqueta genérica.
+// Vísceras reales: 50 órganos individuales del modelo "Splanchnology" de
+// Z-Anatomy (CC BY-SA) — ver assets-source/ORGANS_CREDITS.md. Reemplaza al
+// busto de torso+cabeza anterior (una sola malla sin nombres por órgano).
+// Igual para ambos sexos (los órganos no reproductivos no cambian entre
+// hombre y mujer) — el sistema reproductivo femenino vive aparte, en
+// reproductive.js.
 //
-// Al ser solo torso+cabeza (no cuerpo completo), no se puede usar el ajuste
-// por defecto de loadGlbLayer (que estira cualquier pieza a la altura
-// completa) — se le da un rango explícito: de la cadera (~3.4, coincide con
-// la posición de "Cadera" en parts-primitive.js) a la coronilla (TARGET_HEIGHT,
-// igual que la "Cabeza" de piel).
-const ORGANS_RANGE = { top: TARGET_HEIGHT, bottom: 3.4 };
-
-const ORGANS_META = {
-  name: 'Órganos internos',
-  desc: 'Corazón, pulmones, tubo digestivo, riñones y los principales vasos sanguíneos del tronco.'
-};
+// El export solo contiene las mallas de los órganos (no el cuerpo completo),
+// así que se usa un rango explícito en vez del ajuste por defecto de
+// loadGlbLayer: la posición real que ocupan dentro de la altura total del
+// cuerpo (calculada a partir de su propia caja delimitadora en Blender antes
+// de exportar, en metros: ~0.74 a ~1.44 de 1.7m de altura).
+const ORGANS_RANGE = { top: 5.572, bottom: 2.8989 };
 
 export function loadOrgans(bodyGroup, allMeshes) {
-  return loadGlbLayer('models/organs.glb', 'organo', () => ORGANS_META, { range: ORGANS_RANGE, useZones: true }).then((parts) => {
+  return loadGlbLayer('models/organs.glb', 'organo', getOrganMeta, { range: ORGANS_RANGE }).then((parts) => {
     parts.forEach((mesh) => bodyGroup.add(mesh));
     allMeshes.push(...parts);
     return parts;

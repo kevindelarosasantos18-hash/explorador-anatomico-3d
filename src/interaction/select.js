@@ -103,7 +103,7 @@ export function createSelection({ bodyGroup, camera, canvasEl, layerManager, get
     mesh.userData.targetScale = 1.18;
     mesh.material.emissive.setHex(0xFFB84D);
     mesh.material.emissiveIntensity = 0.35;
-    onInfoChange(mesh.userData, LAYER_LABEL[mesh.userData.layer]);
+    onInfoChange(mesh.userData, LAYER_LABEL[mesh.userData.layer], { mesh });
     const r = mesh.geometry.boundingSphere ? mesh.geometry.boundingSphere.radius : 0.2;
     const maxScale = Math.max(mesh.scale.x, mesh.scale.y, mesh.scale.z);
     showLabelAt(mesh.userData.name, mesh.position, r * maxScale + 0.22);
@@ -115,7 +115,7 @@ export function createSelection({ bodyGroup, camera, canvasEl, layerManager, get
     const meta = nearestZone(ZONES_BY_LAYER[layer], point);
     marker.position.copy(point);
     marker.visible = true;
-    onInfoChange(meta, LAYER_LABEL[layer]);
+    onInfoChange(meta, LAYER_LABEL[layer], { zoneLayer: layer, zonePoint: point.clone() });
     showLabelAt(meta.name, point, 0.16);
   }
 

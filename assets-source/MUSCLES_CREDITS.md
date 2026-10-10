@@ -1,6 +1,20 @@
 # Créditos — public/models/{male,female}/muscles.glb
 
-## Masculino
+## Masculino (actual)
+Modelo: **"Myology"**
+Autor: **Z-Anatomy** (Sketchfab)
+Licencia: **CC Attribution-ShareAlike (CC BY-SA 4.0)**
+Fuente: https://sketchfab.com/z-anatomy
+
+Modelo real de anatomía (no un sculpt artístico) con 138 mallas separadas por
+material, procesadas en Blender: se corrigieron piezas que en el archivo
+original nunca quedaron separadas del todo (import → 341 músculos reales) y
+se clasificó cada uno individualmente (nombre y descripción en español, ver
+`src/data/muscle-metadata.js`). Al ser CC BY-SA, cualquier redistribución de
+los archivos `.glb` derivados debe mantener la misma licencia, además del
+crédito visible al autor.
+
+## Masculino (anterior, reemplazado)
 Modelo: **"Male Full Body Ecorche"**
 Autor: **diegoluga** (Sketchfab)
 Licencia: **CC Attribution (CC-BY 4.0)**
